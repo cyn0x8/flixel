@@ -1,10 +1,5 @@
 package flixel;
 
-import openfl.Lib;
-import openfl.display.DisplayObject;
-import openfl.display.Stage;
-import openfl.display.StageDisplayState;
-import openfl.net.URLRequest;
 import flixel.effects.postprocess.PostProcess;
 import flixel.math.FlxMath;
 import flixel.math.FlxRandom;
@@ -28,6 +23,11 @@ import flixel.system.scaleModes.RatioScaleMode;
 import flixel.util.FlxCollision;
 import flixel.util.FlxSave;
 import flixel.util.typeLimit.NextState;
+import openfl.Lib;
+import openfl.display.DisplayObject;
+import openfl.display.Stage;
+import openfl.display.StageDisplayState;
+import openfl.net.URLRequest;
 #if FLX_TOUCH
 import flixel.input.touch.FlxTouchManager;
 #end
@@ -106,7 +106,7 @@ class FlxG
 	 * The HaxeFlixel version, in semantic versioning syntax. Use `Std.string()`
 	 * on it to get a `String` formatted like this: `"HaxeFlixel MAJOR.MINOR.PATCH-COMMIT_SHA"`.
 	 */
-	public static var VERSION(default, null):FlxVersion = new FlxVersion(5, 8, 1);
+	public static var VERSION(default, null):FlxVersion = new FlxVersion(5, 9, 0);
 
 	/**
 	 * Internal tracker for game object.
