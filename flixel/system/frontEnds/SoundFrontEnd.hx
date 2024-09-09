@@ -70,14 +70,14 @@ class SoundFrontEnd
 	 * volumeUp-, volumeDown- or muteKeys is pressed.
 	 */
 	public var soundTrayEnabled:Bool = true;
-	
+
 	#if FLX_SOUND_TRAY
 	/**
 	 * The sound tray display container.
 	 * A getter for `FlxG.game.soundTray`.
 	 */
 	public var soundTray(get, never):FlxSoundTray;
-	
+
 	inline function get_soundTray()
 	{
 		return FlxG.game.soundTray;
@@ -116,7 +116,7 @@ class SoundFrontEnd
 	{
 		if (group == null)
 			group = defaultMusicGroup;
-		
+
 		if (music == null)
 		{
 			music = new FlxSound();
@@ -125,7 +125,7 @@ class SoundFrontEnd
 		{
 			music.stop();
 		}
-		
+
 		music.loadEmbedded(embeddedMusic, looped);
 		music.volume = volume;
 		music.persist = true;
@@ -193,13 +193,13 @@ class SoundFrontEnd
 	{
 		if (group == null)
 			group = defaultSoundGroup;
-		
+
 		sound.volume = volume;
 		group.add(sound);
-		
+
 		if (autoPlay)
 			sound.play();
-		
+
 		return sound;
 	}
 
@@ -357,9 +357,27 @@ class SoundFrontEnd
 	public function changeVolume(Amount:Float):Void
 	{
 		muted = false;
+		volume = logToLinear(volume);
 		volume += Amount;
+		volume = linearToLog(volume);
 		showSoundTray(Amount > 0);
 	}
+
+	public function linearToLog(x:Float, minValue:Float = 0.001):Float {
+        // Ensure x is between 0 and 1
+        x = Math.max(0, Math.min(1, x));
+
+        // Convert linear scale to logarithmic
+        return Math.exp(Math.log(minValue) * (1 - x));
+    }
+
+    public function logToLinear(x:Float, minValue:Float = 0.001):Float {
+        // Ensure x is between minValue and 1
+        x = Math.max(minValue, Math.min(1, x));
+
+        // Convert logarithmic scale to linear
+        return 1 - (Math.log(x) / Math.log(minValue));
+    }
 
 	/**
 	 * Shows the sound tray if it is enabled.
