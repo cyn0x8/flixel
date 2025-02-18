@@ -446,7 +446,7 @@ class FlxSprite extends FlxObject
 
 	/**
 	 * Load graphic from another `FlxSprite` and copy its tile sheet data.
-	 * This method can useful for non-flash targets.
+	 * This method can be useful for non-flash targets.
 	 *
 	 * @param   Sprite   The `FlxSprite` from which you want to load graphic data.
 	 * @return  This `FlxSprite` instance (nice for chaining stuff together, if you're into that).
@@ -569,7 +569,11 @@ class FlxSprite extends FlxObject
 			var bitmap:BitmapData = FlxBitmapDataUtil.generateRotations(brush, Rotations, AntiAliasing, AutoBuffer);
 			tempGraph = FlxGraphic.fromBitmapData(bitmap, false, key);
 		}
-
+		
+		#if FLX_TRACK_GRAPHICS
+		tempGraph.trackingInfo = 'loadRotatedGraphic($ID, $Rotations, $Frame, $AntiAliasing, $AutoBuffer)';
+		#end
+		
 		var max:Int = (brush.height > brush.width) ? brush.height : brush.width;
 		max = AutoBuffer ? Std.int(max * 1.5) : max;
 
@@ -598,19 +602,23 @@ class FlxSprite extends FlxObject
 	 *                         Will create frames that are 150% larger on each axis than the original frame or graphic.
 	 * @return  this FlxSprite with loaded rotated graphic in it.
 	 */
-	public function loadRotatedFrame(Frame:FlxFrame, Rotations:Int = 16, AntiAliasing:Bool = false, AutoBuffer:Bool = false):FlxSprite
+	public function loadRotatedFrame(frame:FlxFrame, rotations = 16, antiAliasing = false, autoBuffer = false):FlxSprite
 	{
-		var key:String = Frame.parent.key;
-		if (Frame.name != null)
-			key += ":" + Frame.name;
+		var key:String = frame.parent.key;
+		if (frame.name != null)
+			key += ":" + frame.name;
 		else
-			key += ":" + Frame.frame.toString();
-
+			key += ":" + frame.frame.toString();
+		
 		var graphic:FlxGraphic = FlxG.bitmap.get(key);
 		if (graphic == null)
-			graphic = FlxGraphic.fromBitmapData(Frame.paint(), false, key);
-
-		return loadRotatedGraphic(graphic, Rotations, -1, AntiAliasing, AutoBuffer);
+			graphic = FlxGraphic.fromBitmapData(frame.paint(), false, key);
+		
+		#if FLX_TRACK_GRAPHICS
+		graphic.trackingInfo = 'loadRotatedFrame($ID, $rotations, $antiAliasing, $autoBuffer)';
+		#end
+		
+		return loadRotatedGraphic(graphic, rotations, -1, antiAliasing, autoBuffer);
 	}
 
 	/**
@@ -635,10 +643,15 @@ class FlxSprite extends FlxObject
 	 *                   it is used as a prefix to find a new unique name like `"Key3"`.
 	 * @return  This `FlxSprite` instance (nice for chaining stuff together, if you're into that).
 	 */
-	public function makeGraphic(Width:Int, Height:Int, Color:FlxColor = FlxColor.WHITE, Unique:Bool = false, ?Key:String):FlxSprite
+	public function makeGraphic(width:Int, height:Int, color = FlxColor.WHITE, unique = false, ?key:String):FlxSprite
 	{
-		var graph:FlxGraphic = FlxG.bitmap.create(Width, Height, Color, Unique, Key);
+		var graph:FlxGraphic = FlxG.bitmap.create(width, height, color, unique, key);
 		frames = graph.imageFrame;
+		
+		#if FLX_TRACK_GRAPHICS
+		graph.trackingInfo = 'makeGraphic($ID, ${color.toHexString()})';
+		#end
+		
 		return this;
 	}
 
@@ -820,11 +833,11 @@ class FlxSprite extends FlxObject
 	@:noCompletion
 	function drawSimple(camera:FlxCamera):Void
 	{
-		getScreenPosition(_point, camera).subtractPoint(offset);
+		getScreenPosition(_point, camera).subtract(offset);
 		if (isPixelPerfectRender(camera))
 			_point.floor();
 
-		_point.copyToFlash(_flashPoint);
+		_point.copyTo(_flashPoint);
 		camera.copyPixels(_frame, framePixels, _flashRect, _flashPoint, colorTransform, blend, antialiasing);
 	}
 
@@ -843,7 +856,7 @@ class FlxSprite extends FlxObject
 				_matrix.rotateWithTrig(_cosAngle, _sinAngle);
 		}
 
-		getScreenPosition(_point, camera).subtractPoint(offset);
+		getScreenPosition(_point, camera).subtract(offset);
 		_point.add(origin.x, origin.y);
 		_matrix.translate(_point.x, _point.y);
 
@@ -1109,11 +1122,11 @@ class FlxSprite extends FlxObject
 		
 		result.subtract(worldPoint.x, worldPoint.y);
 		result.negate();
-		result.addPoint(offset);
-		result.subtractPoint(origin);
+		result.add(offset);
+		result.subtract(origin);
 		result.scale(1 / scale.x, 1 / scale.y);
 		result.degrees -= angle;
-		result.addPoint(origin);
+		result.add(origin);
 		
 		worldPoint.putWeak();
 		
@@ -1135,11 +1148,11 @@ class FlxSprite extends FlxObject
 		
 		result.subtract(screenPoint.x, screenPoint.y);
 		result.negate();
-		result.addPoint(offset);
-		result.subtractPoint(origin);
+		result.add(offset);
+		result.subtract(origin);
 		result.scale(1 / scale.x, 1 / scale.y);
 		result.degrees -= angle;
-		result.addPoint(origin);
+		result.add(origin);
 		
 		screenPoint.putWeak();
 		

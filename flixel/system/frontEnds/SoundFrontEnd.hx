@@ -5,16 +5,13 @@ import flixel.FlxG;
 import flixel.group.FlxGroup;
 import flixel.input.keyboard.FlxKey;
 import flixel.math.FlxMath;
-import flixel.system.FlxAssets;
 import flixel.sound.FlxSound;
 import flixel.sound.FlxSoundGroup;
+import flixel.system.FlxAssets;
 import flixel.system.ui.FlxSoundTray;
+import flixel.text.FlxInputText;
 import flixel.util.FlxSignal;
-import openfl.Assets;
 import openfl.media.Sound;
-#if (openfl >= "8.0.0")
-import openfl.utils.AssetType;
-#end
 
 /**
  * Accessed via `FlxG.sound`.
@@ -106,6 +103,8 @@ class SoundFrontEnd
 	/**
 	 * Set up and play a looping background soundtrack.
 	 *
+	 * **Note:** If the `FLX_DEFAULT_SOUND_EXT` flag is enabled, you may omit the file extension
+	 *
 	 * @param   embeddedMusic  The sound file you want to loop in the background.
 	 * @param   volume         How loud the sound should be, from 0 to 1.
 	 * @param   looped         Whether to loop this music.
@@ -134,6 +133,8 @@ class SoundFrontEnd
 
 	/**
 	 * Creates a new FlxSound object.
+	 *
+	 * **Note:** If the `FLX_DEFAULT_SOUND_EXT` flag is enabled, you may omit the file extension
 	 *
 	 * @param   embeddedSound   The embedded sound resource you want to play.  To stream, use the optional URL parameter instead.
 	 * @param   volume          How loud to play it (0 to 1).
@@ -212,8 +213,8 @@ class SoundFrontEnd
 	public inline function cache(embeddedSound:String):Sound
 	{
 		// load the sound into the OpenFL assets cache
-		if (Assets.exists(embeddedSound, AssetType.SOUND) || Assets.exists(embeddedSound, AssetType.MUSIC))
-			return Assets.getSound(embeddedSound, true);
+		if (FlxG.assets.exists(embeddedSound, SOUND))
+			return FlxG.assets.getSoundUnsafe(embeddedSound, true);
 		FlxG.log.error('Could not find a Sound asset with an ID of \'$embeddedSound\'.');
 		return null;
 	}
@@ -224,7 +225,7 @@ class SoundFrontEnd
 	 */
 	public function cacheAll():Void
 	{
-		for (id in Assets.list(AssetType.SOUND))
+		for (id in FlxG.assets.list(SOUND))
 		{
 			cache(id);
 		}
@@ -232,6 +233,8 @@ class SoundFrontEnd
 
 	/**
 	 * Plays a sound from an embedded sound. Tries to recycle a cached sound first.
+	 *
+	 * **Note:** If the `FLX_DEFAULT_SOUND_EXT` flag is enabled, you may omit the file extension
 	 *
 	 * @param   embeddedSound  The embedded sound resource you want to play.
 	 * @param   volume         How loud to play it (0 to 1).
@@ -356,8 +359,34 @@ class SoundFrontEnd
 	public function changeVolume(Amount:Float):Void
 	{
 		muted = false;
+		volume = logToLinear(volume);
 		volume += Amount;
+		volume = linearToLog(volume);
 		showSoundTray(Amount > 0);
+	}
+
+	public function linearToLog(x:Float, minValue:Float = 0.001):Float
+	{
+		// If linear volume is 0, return 0
+		if (x <= 0) return 0;
+
+		// Ensure x is between 0 and 1
+		x = Math.min(1, x);
+
+		// Convert linear scale to logarithmic
+		return Math.exp(Math.log(minValue) * (1 - x));
+	}
+
+	public function logToLinear(x:Float, minValue:Float = 0.001):Float
+	{
+		// If logarithmic volume is 0, return 0
+		if (x <= 0) return 0;
+
+		// Ensure x is between minValue and 1
+		x = Math.min(1, x);
+
+		// Convert logarithmic scale to linear
+		return 1 - (Math.log(Math.max(x, minValue)) / Math.log(minValue));
 	}
 
 	/**
@@ -394,12 +423,15 @@ class SoundFrontEnd
 			list.update(elapsed);
 
 		#if FLX_KEYBOARD
-		if (FlxG.keys.anyJustReleased(muteKeys))
-			toggleMuted();
-		else if (FlxG.keys.anyJustReleased(volumeUpKeys))
-			changeVolume(0.1);
-		else if (FlxG.keys.anyJustReleased(volumeDownKeys))
-			changeVolume(-0.1);
+		if (!FlxInputText.globalManager.isTyping)
+		{
+			if (FlxG.keys.anyJustReleased(muteKeys))
+				toggleMuted();
+			else if (FlxG.keys.anyJustReleased(volumeUpKeys))
+				changeVolume(0.1);
+			else if (FlxG.keys.anyJustReleased(volumeDownKeys))
+				changeVolume(-0.1);
+		}
 		#end
 	}
 
